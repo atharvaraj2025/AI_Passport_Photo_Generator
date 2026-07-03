@@ -1,0 +1,3 @@
+import { Download, History, Info, Settings, UploadCloud } from 'lucide-react';
+const items = [['Upload', UploadCloud, '#home'], ['Results', Download, '#results'], ['About', Info, '#about'], ['Settings', Settings, '#settings'], ['History', History, '#history']] as const;
+export function Sidebar() { return <aside className="hidden w-60 shrink-0 lg:block"><div className="sticky top-24 rounded-3xl border border-white/30 bg-white/50 p-4 shadow-glass backdrop-blur-xl dark:bg-slate-900/50">{items.map(([label, Icon, href]) => <a key={label} href={href} className="mb-2 flex items-center gap-3 rounded-2xl px-4 py-3 text-slate-700 hover:bg-white/70 dark:text-slate-200 dark:hover:bg-slate-800"><Icon size={18}/>{label}</a>)}</div></aside>; }
