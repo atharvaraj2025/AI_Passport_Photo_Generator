@@ -4,15 +4,20 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, s
 from fastapi.responses import FileResponse
 from loguru import logger
 from app.config import Settings, get_settings
-from app.dependencies import get_face_detector
+from app.dependencies import get_background_remover, get_face_detector
 from app.models.face_detector import FaceDetector
+from app.models.background_remover import BackgroundRemover
 from app.schemas.passport import ProcessingSummary
 from app.services.passport_service import PassportService
 
 router = APIRouter(prefix="/api", tags=["passport"])
 
-def service(settings: Settings = Depends(get_settings), detector: FaceDetector = Depends(get_face_detector)) -> PassportService:
-    return PassportService(settings, detector)
+def service(
+    settings: Settings = Depends(get_settings),
+    detector: FaceDetector = Depends(get_face_detector),
+    background_remover: BackgroundRemover = Depends(get_background_remover),
+) -> PassportService:
+    return PassportService(settings, detector, background_remover)
 
 @router.post("/passport/single", response_model=ProcessingSummary)
 async def process_single(file: UploadFile = File(...), background_mode: str = Form("original"), background_color: str | None = Form(None), svc: PassportService = Depends(service)) -> ProcessingSummary:

@@ -29,6 +29,10 @@ class Settings(BaseSettings):
     insightface_providers: list[str] = Field(default_factory=lambda: ["CPUExecutionProvider"])
     default_background: str = "original"
     solid_background_color: str = "#ffffff"
+    background_removal_model: str = "briaai/RMBG-2.0"
+    background_removal_input_size: int = 1024
+    background_removal_max_side: int = 2048
+    background_alpha_feather_radius: float = 0.6
     request_timeout_seconds: int = 600
 
     @property
