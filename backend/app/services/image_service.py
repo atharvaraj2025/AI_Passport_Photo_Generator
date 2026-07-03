@@ -130,40 +130,91 @@ class PassportImageService:
         fw, fh = max(1.0, x2 - x1), max(1.0, y2 - y1)
         cx = (x1 + x2) / 2
 
-        rect_left = max(1, int(cx - fw * 2.2))
-        rect_top = max(1, int(y1 - fh * 1.5))
-        rect_right = min(width - 2, int(cx + fw * 2.2))
-        rect_bottom = min(height - 2, int(y2 + fh * 4.2))
-        rect_w = max(2, rect_right - rect_left)
-        rect_h = max(2, rect_bottom - rect_top)
-
+        # Start from probable background everywhere and explicitly seed only
+        # the portrait area as foreground. Marking a large rectangle as probable
+        # foreground keeps doors/walls behind the person, which is why only
+        # part of the background changed in real user photos.
         mask = np.full((height, width), cv2.GC_PR_BGD, dtype=np.uint8)
-        border = max(4, min(width, height) // 40)
+        border = max(6, min(width, height) // 35)
         mask[:border, :] = cv2.GC_BGD
         mask[-border:, :] = cv2.GC_BGD
         mask[:, :border] = cv2.GC_BGD
         mask[:, -border:] = cv2.GC_BGD
-        mask[rect_top:rect_bottom, rect_left:rect_right] = cv2.GC_PR_FGD
 
-        # The detected face is definitely foreground and gives GrabCut a stable
-        # seed even when the selected background color is close to skin/clothes.
-        face_left = max(0, int(x1 - fw * 0.15))
-        face_top = max(0, int(y1 - fh * 0.25))
-        face_right = min(width, int(x2 + fw * 0.15))
-        face_bottom = min(height, int(y2 + fh * 0.35))
-        mask[face_top:face_bottom, face_left:face_right] = cv2.GC_FGD
+        # Also mark pixels that look like the outer-edge background as definite
+        # background. This removes interior wall/door regions that are not
+        # connected to the crop edge after the passport crop.
+        rgb = np.array(image)
+        lab = cv2.cvtColor(rgb, cv2.COLOR_RGB2LAB)
+        edge_pixels = np.concatenate(
+            (
+                lab[:border, :, :].reshape(-1, 3),
+                lab[-border:, :, :].reshape(-1, 3),
+                lab[:, :border, :].reshape(-1, 3),
+                lab[:, -border:, :].reshape(-1, 3),
+            ),
+            axis=0,
+        )
+        edge_mean = edge_pixels.mean(axis=0)
+        distance = np.linalg.norm(lab.astype(np.float32) - edge_mean.astype(np.float32), axis=2)
+        mask[distance < 28] = cv2.GC_BGD
 
-        image_bgr = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
+        # Face/head is definite foreground.
+        head_center = (int(cx), int(y1 + fh * 0.45))
+        head_axes = (max(2, int(fw * 0.78)), max(2, int(fh * 0.95)))
+        cv2.ellipse(mask, head_center, head_axes, 0, 0, 360, cv2.GC_FGD, -1)
+
+        # Hair/upper body and shoulders are probable foreground, but the rest of
+        # the crop remains background so GrabCut can remove all visible scenery.
+        upper_top = max(0, int(y1 - fh * 0.25))
+        upper_bottom = min(height - 1, int(y2 + fh * 0.55))
+        upper_left = max(0, int(cx - fw * 1.05))
+        upper_right = min(width - 1, int(cx + fw * 1.05))
+        upper_region = mask[upper_top:upper_bottom, upper_left:upper_right]
+        upper_region[upper_region == cv2.GC_PR_BGD] = cv2.GC_PR_FGD
+
+        shoulders_y = min(height - 1, int(y2 + fh * 0.65))
+        body_bottom = height - 1
+        body = np.array(
+            [
+                [max(0, int(cx - fw * 1.25)), shoulders_y],
+                [min(width - 1, int(cx + fw * 1.25)), shoulders_y],
+                [min(width - 1, int(cx + fw * 2.05)), body_bottom],
+                [max(0, int(cx - fw * 2.05)), body_bottom],
+            ],
+            dtype=np.int32,
+        )
+        cv2.fillPoly(mask, [body], cv2.GC_PR_FGD)
+
+        # A smaller torso core is definite foreground so striped/dark clothing is
+        # not accidentally removed when it differs strongly from the face.
+        torso = np.array(
+            [
+                [max(0, int(cx - fw * 0.75)), min(height - 1, int(y2 + fh * 0.75))],
+                [min(width - 1, int(cx + fw * 0.75)), min(height - 1, int(y2 + fh * 0.75))],
+                [min(width - 1, int(cx + fw * 1.15)), body_bottom],
+                [max(0, int(cx - fw * 1.15)), body_bottom],
+            ],
+            dtype=np.int32,
+        )
+        cv2.fillPoly(mask, [torso], cv2.GC_FGD)
+        mask[:border, :] = cv2.GC_BGD
+        mask[-border:, :] = cv2.GC_BGD
+        mask[:, :border] = cv2.GC_BGD
+        mask[:, -border:] = cv2.GC_BGD
+
+        image_bgr = cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR)
         bg_model = np.zeros((1, 65), np.float64)
         fg_model = np.zeros((1, 65), np.float64)
         try:
-            cv2.grabCut(image_bgr, mask, (rect_left, rect_top, rect_w, rect_h), bg_model, fg_model, 5, cv2.GC_INIT_WITH_MASK)
+            cv2.grabCut(image_bgr, mask, (1, 1, width - 2, height - 2), bg_model, fg_model, 8, cv2.GC_INIT_WITH_MASK)
         except cv2.error as exc:
-            logger.warning("GrabCut background replacement failed; using rectangular foreground mask: {}", exc)
+            logger.warning("GrabCut background replacement failed; using seeded foreground mask: {}", exc)
 
         foreground = np.where((mask == cv2.GC_FGD) | (mask == cv2.GC_PR_FGD), 255, 0).astype("uint8")
         kernel = np.ones((5, 5), np.uint8)
         foreground = cv2.morphologyEx(foreground, cv2.MORPH_CLOSE, kernel, iterations=2)
+        foreground = cv2.morphologyEx(foreground, cv2.MORPH_OPEN, kernel, iterations=1)
         foreground = cv2.GaussianBlur(foreground, (7, 7), 0)
         return foreground
 
