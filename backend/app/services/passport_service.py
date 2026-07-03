@@ -6,14 +6,15 @@ from fastapi import UploadFile
 from loguru import logger
 from app.config import Settings
 from app.models.face_detector import FaceDetector
+from app.models.background_remover import BackgroundRemover
 from app.schemas.passport import ProcessingSummary, ErrorDetail, ProcessedPhoto
 from app.services.image_service import PassportImageService, ImageProcessingError
 from app.utils.files import safe_filename, save_upload, validate_extension, extract_zip
 
 class PassportService:
-    def __init__(self, settings: Settings, detector: FaceDetector) -> None:
+    def __init__(self, settings: Settings, detector: FaceDetector, background_remover: BackgroundRemover) -> None:
         self.settings = settings
-        self.image_service = PassportImageService(settings, detector)
+        self.image_service = PassportImageService(settings, detector, background_remover)
 
     async def process_uploads(self, files: list[UploadFile], background_mode: str, background_color: str | None) -> ProcessingSummary:
         if not files:

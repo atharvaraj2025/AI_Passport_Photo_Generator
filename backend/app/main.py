@@ -7,21 +7,24 @@ from loguru import logger
 from app.api.passport import router as passport_router
 from app.config import get_settings
 from app.models.face_detector import FaceDetector
+from app.models.background_remover import BackgroundRemover
 from app.schemas.passport import HealthResponse
 from app.utils.logging import configure_logging
 
 settings = get_settings()
 configure_logging(settings)
 face_detector = FaceDetector(settings.insightface_model, settings.insightface_providers)
+background_remover = BackgroundRemover(settings)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Starting {} {}", settings.app_name, settings.app_version)
     face_detector.load()
+    background_remover.load()
     yield
     logger.info("Shutting down {}", settings.app_name)
 
-app = FastAPI(title=settings.app_name, version=settings.app_version, description="Local AI passport photo generator with InsightFace detection only.", lifespan=lifespan)
+app = FastAPI(title=settings.app_name, version=settings.app_version, description="Local AI passport photo generator with InsightFace detection and RMBG background removal.", lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origins, allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 app.include_router(passport_router)
 
@@ -36,4 +39,4 @@ async def root() -> dict[str, str]:
 
 @app.get("/health", response_model=HealthResponse)
 async def health() -> HealthResponse:
-    return HealthResponse(status="ok", app=settings.app_name, version=settings.app_version, model_loaded=face_detector.loaded)
+    return HealthResponse(status="ok", app=settings.app_name, version=settings.app_version, model_loaded=face_detector.loaded and background_remover.loaded)
