@@ -1,3 +1,158 @@
-import { useCallback, useMemo, useState } from 'react'; import { useDropzone } from 'react-dropzone'; import toast from 'react-hot-toast'; import { motion } from 'framer-motion'; import { FolderOpen, UploadCloud, X } from 'lucide-react'; import type { BackgroundMode, ProcessingSummary } from '../types/api'; import { uploadImages, uploadZip } from '../services/api'; import { Loader } from './Loader';
-const supported = { 'image/jpeg': ['.jpg', '.jpeg'], 'image/png': ['.png'], 'image/webp': ['.webp'], 'image/heic': ['.heic'], 'image/heif': ['.heif'], 'application/zip': ['.zip'] };
-export function UploadCard({ onComplete }: { onComplete: (summary: ProcessingSummary) => void }) { const [files, setFiles] = useState<File[]>([]); const [progress, setProgress] = useState(0); const [processing, setProcessing] = useState(false); const [mode, setMode] = useState<BackgroundMode>('original'); const [color, setColor] = useState('#ffffff'); const onDrop = useCallback((accepted: File[]) => setFiles(prev => [...prev, ...accepted]), []); const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop, accept: supported, multiple: true }); const estimate = useMemo(() => Math.max(2, files.length * 3), [files.length]); const submit = async () => { if (!files.length) return toast.error('Please add at least one image or ZIP archive.'); setProcessing(true); setProgress(0); try { const zip = files.length === 1 && files[0].name.toLowerCase().endsWith('.zip'); const summary = zip ? await uploadZip(files[0], mode, color, setProgress) : await uploadImages(files, mode, color, setProgress); onComplete(summary); toast.success(`Processed ${summary.successful}/${summary.total} files`); } catch (error) { toast.error(error instanceof Error ? error.message : 'Upload failed'); } finally { setProcessing(false); } }; return <section id="home" className="rounded-[2rem] border border-white/30 bg-white/60 p-6 shadow-glass backdrop-blur-xl dark:bg-slate-900/60"><div {...getRootProps()} className={`grid cursor-pointer place-items-center rounded-[1.5rem] border-2 border-dashed p-10 text-center transition ${isDragActive ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950' : 'border-slate-300 dark:border-slate-700'}`}><input {...getInputProps()} /><UploadCloud className="mb-4 text-indigo-500" size={48}/><h2 className="text-2xl font-bold text-slate-900 dark:text-white">Drag & drop passport photo sources</h2><p className="mt-2 max-w-xl text-slate-600 dark:text-slate-300">Browse files, folders, multiple images, HEIC/HEIF images, or a ZIP archive. Up to 1000 images are supported locally.</p><button className="mt-5 rounded-2xl bg-indigo-600 px-5 py-3 font-semibold text-white"><FolderOpen className="mr-2 inline"/> Browse Files</button></div><div className="mt-6 grid gap-4 md:grid-cols-3"><label className="rounded-2xl bg-white/70 p-4 dark:bg-slate-800"><span className="text-sm font-semibold dark:text-white">Background</span><select value={mode} onChange={e=>setMode(e.target.value as BackgroundMode)} className="mt-2 w-full rounded-xl border p-2 dark:bg-slate-900 dark:text-white"><option value="original">Original background</option><option value="solid">Colored background</option></select></label><label className="rounded-2xl bg-white/70 p-4 dark:bg-slate-800"><span className="text-sm font-semibold dark:text-white">Color</span><input type="color" value={color} onChange={e=>setColor(e.target.value)} className="mt-2 h-10 w-full" disabled={mode==='original'} /></label><div className="rounded-2xl bg-white/70 p-4 text-sm dark:bg-slate-800 dark:text-white"><b>{files.length}</b> files selected<br/>Estimated processing: {estimate}s</div></div>{files.length>0 && <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{files.map((file, i) => <motion.div initial={{opacity:0,y:8}} animate={{opacity:1,y:0}} key={`${file.name}-${i}`} className="flex items-center justify-between rounded-2xl bg-white/80 p-3 text-sm dark:bg-slate-800 dark:text-white"><span className="truncate">{file.name}</span><button onClick={() => setFiles(f => f.filter((_,idx)=>idx!==i))}><X size={16}/></button></motion.div>)}</div>}<div className="mt-6"><div className="mb-2 h-3 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800"><div className="h-full bg-gradient-to-r from-indigo-500 to-cyan-400" style={{width:`${progress}%`}} /></div><button onClick={submit} disabled={processing} className="rounded-2xl bg-slate-950 px-6 py-3 font-bold text-white disabled:opacity-50 dark:bg-white dark:text-slate-950">{processing ? <Loader label="Uploading and processing"/> : 'Generate Passport Photos'}</button>{processing && <button onClick={()=>toast('Cancel will stop after the current request completes.')} className="ml-3 rounded-2xl bg-slate-200 px-5 py-3 dark:bg-slate-700 dark:text-white">Cancel processing</button>}</div></section>; }
+import { useCallback, useMemo, useState } from "react";
+import { useDropzone } from "react-dropzone";
+import toast from "react-hot-toast";
+import { motion } from "framer-motion";
+import { FolderOpen, UploadCloud, X } from "lucide-react";
+import type { BackgroundMode, ProcessingSummary } from "../types/api";
+import { uploadImages, uploadZip } from "../services/api";
+import { Loader } from "./Loader";
+const supported = {
+  "image/jpeg": [".jpg", ".jpeg"],
+  "image/png": [".png"],
+  "image/webp": [".webp"],
+  "image/heic": [".heic"],
+  "image/heif": [".heif"],
+  "application/zip": [".zip"],
+};
+export function UploadCard({
+  onComplete,
+}: {
+  onComplete: (summary: ProcessingSummary) => void;
+}) {
+  const [files, setFiles] = useState<File[]>([]);
+  const [progress, setProgress] = useState(0);
+  const [processing, setProcessing] = useState(false);
+  const [mode, setMode] = useState<BackgroundMode>("original");
+  const [color, setColor] = useState("#ffffff");
+  const onDrop = useCallback(
+    (accepted: File[]) => setFiles((prev) => [...prev, ...accepted]),
+    [],
+  );
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: supported,
+    multiple: true,
+  });
+  const estimate = useMemo(() => Math.max(2, files.length * 3), [files.length]);
+  const submit = async () => {
+    if (!files.length)
+      return toast.error("Please add at least one image or ZIP archive.");
+    setProcessing(true);
+    setProgress(0);
+    try {
+      const zip =
+        files.length === 1 && files[0].name.toLowerCase().endsWith(".zip");
+      const summary = zip
+        ? await uploadZip(files[0], mode, color, setProgress)
+        : await uploadImages(files, mode, color, setProgress);
+      onComplete(summary);
+      toast.success(`Processed ${summary.successful}/${summary.total} files`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Upload failed");
+    } finally {
+      setProcessing(false);
+    }
+  };
+  return (
+    <section
+      id="home"
+      className="rounded-[2rem] border border-white/30 bg-white/60 p-6 shadow-glass backdrop-blur-xl dark:bg-slate-900/60"
+    >
+      <div
+        {...getRootProps()}
+        className={`grid cursor-pointer place-items-center rounded-[1.5rem] border-2 border-dashed p-10 text-center transition ${isDragActive ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-950" : "border-slate-300 dark:border-slate-700"}`}
+      >
+        <input {...getInputProps()} />
+        <UploadCloud className="mb-4 text-indigo-500" size={48} />
+        <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+          Drag & drop passport photo sources
+        </h2>
+        <p className="mt-2 max-w-xl text-slate-600 dark:text-slate-300">
+          Browse files, folders, multiple images, HEIC/HEIF images, or a ZIP
+          archive. Up to 1000 images are supported locally.
+        </p>
+        <button className="mt-5 rounded-2xl bg-indigo-600 px-5 py-3 font-semibold text-white">
+          <FolderOpen className="mr-2 inline" /> Browse Files
+        </button>
+      </div>
+      <div className="mt-6 grid gap-4 md:grid-cols-3">
+        <label className="rounded-2xl bg-white/70 p-4 dark:bg-slate-800">
+          <span className="text-sm font-semibold dark:text-white">
+            Background
+          </span>
+          <select
+            value={mode}
+            onChange={(e) => setMode(e.target.value as BackgroundMode)}
+            className="mt-2 w-full rounded-xl border p-2 dark:bg-slate-900 dark:text-white"
+          >
+            <option value="original">Original background</option>
+            <option value="solid">Colored background</option>
+          </select>
+        </label>
+        <label className="rounded-2xl bg-white/70 p-4 dark:bg-slate-800">
+          <span className="text-sm font-semibold dark:text-white">Color</span>
+          <input
+            type="color"
+            value={color}
+            onChange={(e) => setColor(e.target.value)}
+            className="mt-2 h-10 w-full"
+            disabled={mode === "original"}
+          />
+        </label>
+        <div className="rounded-2xl bg-white/70 p-4 text-sm dark:bg-slate-800 dark:text-white">
+          <b>{files.length}</b> files selected
+          <br />
+          Estimated processing: {estimate}s
+        </div>
+      </div>
+      {files.length > 0 && (
+        <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {files.map((file, i) => (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              key={`${file.name}-${i}`}
+              className="flex items-center justify-between rounded-2xl bg-white/80 p-3 text-sm dark:bg-slate-800 dark:text-white"
+            >
+              <span className="truncate">{file.name}</span>
+              <button
+                onClick={() => setFiles((f) => f.filter((_, idx) => idx !== i))}
+              >
+                <X size={16} />
+              </button>
+            </motion.div>
+          ))}
+        </div>
+      )}
+      <div className="mt-6">
+        <div className="mb-2 h-3 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+          <div
+            className="h-full bg-gradient-to-r from-indigo-500 to-cyan-400"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+        <button
+          onClick={submit}
+          disabled={processing}
+          className="rounded-2xl bg-slate-950 px-6 py-3 font-bold text-white disabled:opacity-50 dark:bg-white dark:text-slate-950"
+        >
+          {processing ? (
+            <Loader label="Uploading and processing" />
+          ) : (
+            "Generate Passport Photos"
+          )}
+        </button>
+        {processing && (
+          <button
+            onClick={() =>
+              toast("Cancel will stop after the current request completes.")
+            }
+            className="ml-3 rounded-2xl bg-slate-200 px-5 py-3 dark:bg-slate-700 dark:text-white"
+          >
+            Cancel processing
+          </button>
+        )}
+      </div>
+    </section>
+  );
+}

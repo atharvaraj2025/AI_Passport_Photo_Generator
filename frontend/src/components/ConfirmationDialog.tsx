@@ -1,1 +1,34 @@
-export function ConfirmationDialog({ open, title, onConfirm, onCancel }: { open: boolean; title: string; onConfirm: () => void; onCancel: () => void }) { if (!open) return null; return <div className="fixed inset-0 z-40 grid place-items-center bg-slate-950/50"><div className="rounded-3xl bg-white p-6 shadow-2xl dark:bg-slate-900"><h3 className="text-lg font-bold dark:text-white">{title}</h3><div className="mt-5 flex gap-3"><button onClick={onConfirm} className="rounded-xl bg-red-600 px-4 py-2 text-white">Confirm</button><button onClick={onCancel} className="rounded-xl bg-slate-200 px-4 py-2 dark:bg-slate-700 dark:text-white">Cancel</button></div></div></div>; }
+export function ConfirmationDialog({
+  open,
+  title,
+  onConfirm,
+  onCancel,
+}: {
+  open: boolean;
+  title: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-40 grid place-items-center bg-slate-950/50">
+      <div className="rounded-3xl bg-white p-6 shadow-2xl dark:bg-slate-900">
+        <h3 className="text-lg font-bold dark:text-white">{title}</h3>
+        <div className="mt-5 flex gap-3">
+          <button
+            onClick={onConfirm}
+            className="rounded-xl bg-red-600 px-4 py-2 text-white"
+          >
+            Confirm
+          </button>
+          <button
+            onClick={onCancel}
+            className="rounded-xl bg-slate-200 px-4 py-2 dark:bg-slate-700 dark:text-white"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

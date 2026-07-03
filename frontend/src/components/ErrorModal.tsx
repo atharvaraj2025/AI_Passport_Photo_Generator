@@ -1,2 +1,33 @@
-import type { ErrorDetail } from '../types/api';
-export function ErrorModal({ errors, onClose }: { errors: ErrorDetail[]; onClose: () => void }) { if (!errors.length) return null; return <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/60 p-4"><div className="max-h-[80vh] w-full max-w-2xl overflow-auto rounded-3xl bg-white p-6 shadow-2xl dark:bg-slate-900"><h2 className="text-xl font-bold text-red-600">Processing issues</h2><ul className="mt-4 space-y-3">{errors.map((e,i) => <li key={i} className="rounded-2xl bg-red-50 p-3 text-sm text-red-800 dark:bg-red-950 dark:text-red-100"><b>{e.filename ?? 'Upload'}:</b> {e.message}</li>)}</ul><button onClick={onClose} className="mt-6 rounded-2xl bg-slate-900 px-5 py-2 text-white dark:bg-white dark:text-slate-900">Close</button></div></div>; }
+import type { ErrorDetail } from "../types/api";
+export function ErrorModal({
+  errors,
+  onClose,
+}: {
+  errors: ErrorDetail[];
+  onClose: () => void;
+}) {
+  if (!errors.length) return null;
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/60 p-4">
+      <div className="max-h-[80vh] w-full max-w-2xl overflow-auto rounded-3xl bg-white p-6 shadow-2xl dark:bg-slate-900">
+        <h2 className="text-xl font-bold text-red-600">Processing issues</h2>
+        <ul className="mt-4 space-y-3">
+          {errors.map((e, i) => (
+            <li
+              key={i}
+              className="rounded-2xl bg-red-50 p-3 text-sm text-red-800 dark:bg-red-950 dark:text-red-100"
+            >
+              <b>{e.filename ?? "Upload"}:</b> {e.message}
+            </li>
+          ))}
+        </ul>
+        <button
+          onClick={onClose}
+          className="mt-6 rounded-2xl bg-slate-900 px-5 py-2 text-white dark:bg-white dark:text-slate-900"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  );
+}

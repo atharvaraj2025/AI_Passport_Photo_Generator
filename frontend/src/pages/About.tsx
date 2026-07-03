@@ -1,1 +1,16 @@
-export function About() { return <section id="about" className="rounded-3xl bg-white/60 p-6 dark:bg-slate-900/60"><h2 className="text-2xl font-bold dark:text-white">About</h2><p className="mt-3 text-slate-600 dark:text-slate-300">This local-only tool detects the largest face with InsightFace detection, applies EXIF rotation, composes a professional 413×531 passport crop, and saves high-quality JPEG output. It does not perform face recognition.</p></section>; }
+export function About() {
+  return (
+    <section
+      id="about"
+      className="rounded-3xl bg-white/60 p-6 dark:bg-slate-900/60"
+    >
+      <h2 className="text-2xl font-bold dark:text-white">About</h2>
+      <p className="mt-3 text-slate-600 dark:text-slate-300">
+        This local-only tool detects the largest face with InsightFace
+        detection, applies EXIF rotation, composes a professional 413×531
+        passport crop, and saves high-quality JPEG output. It does not perform
+        face recognition.
+      </p>
+    </section>
+  );
+}
