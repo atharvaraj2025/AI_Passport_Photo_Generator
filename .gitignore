@@ -1,37 +1,68 @@
+# ------------------------
 # Python
+# ------------------------
 venv/
 .venv/
 **/venv/
+
 __pycache__/
 **/__pycache__/
 *.py[cod]
+*$py.class
 
+# Python cache
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ------------------------
 # Environment
+# ------------------------
 .env
-**/.env
 .env.*
+**/.env
+**/.env.*
 
+# ------------------------
 # Logs
+# ------------------------
 logs/
-*.log
 **/logs/
+*.log
 
-# Generated images
+# ------------------------
+# Generated files
+# ------------------------
 backend/app/uploads/
 backend/app/outputs/
 
+# ------------------------
 # Node
+# ------------------------
 node_modules/
 **/node_modules/
 
+# Keep package-lock.json tracked
+# (Recommended for applications)
+
+# ------------------------
 # Build
+# ------------------------
 dist/
 build/
 
+# Vite
+.vite/
+
+# ------------------------
 # IDE
+# ------------------------
 .vscode/
 .idea/
 
-# OS
+# ------------------------
+# Operating System
+# ------------------------
 .DS_Store
 Thumbs.db
+desktop.ini
