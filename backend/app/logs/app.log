@@ -1,9 +1,0 @@
-2026-07-03 19:07:41.347 | INFO     | app.main:lifespan:19 - Starting AI Passport Photo Generator 1.0.0
-2026-07-03 19:07:42.965 | INFO     | app.models.face_detector:load:23 - Loading InsightFace detection model: buffalo_l
-2026-07-03 19:07:47.285 | INFO     | app.models.face_detector:load:27 - InsightFace model loaded
-2026-07-03 19:09:46.184 | INFO     | app.api.passport:process_multiple:24 - Multiple upload count: 1
-2026-07-03 19:09:47.356 | INFO     | app.services.image_service:process_file:44 - Processed WhatsApp_Image_2026-07-03_at_11.47.58.jpeg -> WhatsApp_Image_2026-07-03_at_11.47.58_passport.jpg (1 faces)
-2026-07-03 19:09:47.986 | INFO     | app.api.passport:download_file:38 - Download: WhatsApp_Image_2026-07-03_at_11.47.58_passport.jpg
-2026-07-03 19:10:31.582 | INFO     | app.api.passport:process_multiple:24 - Multiple upload count: 1
-2026-07-03 19:10:32.582 | INFO     | app.services.image_service:process_file:44 - Processed WhatsApp_Image_2026-07-03_at_11.47.58.jpeg -> WhatsApp_Image_2026-07-03_at_11.47.58_passport_1.jpg (1 faces)
-2026-07-03 19:10:32.648 | INFO     | app.api.passport:download_file:38 - Download: WhatsApp_Image_2026-07-03_at_11.47.58_passport_1.jpg
